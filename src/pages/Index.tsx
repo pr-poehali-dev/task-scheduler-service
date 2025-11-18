@@ -9,8 +9,11 @@ interface Task {
   id: number;
   title: string;
   completed: boolean;
-  assignedTo?: string;
+  assignedTo: string[];
   priority: 'low' | 'medium' | 'high';
+  urgent?: boolean;
+  deadline?: string;
+  createdBy?: string;
 }
 
 interface User {
@@ -26,6 +29,7 @@ const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [dismissedNotifications, setDismissedNotifications] = useState<number[]>([]);
   
   const [registeredUsers, setRegisteredUsers] = useState<User[]>([
     { id: 1, name: 'Алексей Иванов', email: 'alex@company.ru', role: 'admin', tasksCompleted: 24, password: 'admin123' },
@@ -36,11 +40,36 @@ const Index = () => {
   ]);
 
   const [tasks, setTasks] = useState<Task[]>([
-    { id: 1, title: 'Подготовить презентацию для клиента', completed: true, assignedTo: 'Алексей Иванов', priority: 'high' },
-    { id: 2, title: 'Провести код-ревью PR #234', completed: false, assignedTo: 'Алексей Иванов', priority: 'medium' },
-    { id: 3, title: 'Обновить документацию API', completed: false, assignedTo: 'Мария Петрова', priority: 'low' },
-    { id: 4, title: 'Исправить баг в модуле авторизации', completed: true, assignedTo: 'Иван Сидоров', priority: 'high' },
-    { id: 5, title: 'Планирование спринта на следующую неделю', completed: false, assignedTo: 'Алексей Иванов', priority: 'medium' },
+    { 
+      id: 1, 
+      title: 'Подготовить презентацию для клиента', 
+      completed: true, 
+      assignedTo: ['Алексей Иванов'], 
+      priority: 'high',
+      deadline: '2025-01-20',
+      createdBy: 'Алексей Иванов',
+      urgent: false
+    },
+    { 
+      id: 2, 
+      title: 'Провести код-ревью PR #234', 
+      completed: false, 
+      assignedTo: ['Алексей Иванов'], 
+      priority: 'medium',
+      deadline: '2025-01-18',
+      createdBy: 'Алексей Иванов',
+      urgent: true
+    },
+    { 
+      id: 3, 
+      title: 'Обновить документацию API', 
+      completed: false, 
+      assignedTo: ['Мария Петрова', 'Иван Сидоров'], 
+      priority: 'low',
+      deadline: '2025-01-25',
+      createdBy: 'Алексей Иванов',
+      urgent: false
+    },
   ]);
 
   const [notes, setNotes] = useState([
@@ -48,10 +77,6 @@ const Index = () => {
     { id: 2, text: 'Посмотреть вебинар по React 19', completed: true },
     { id: 3, text: 'Записаться к стоматологу', completed: false },
   ]);
-
-  const [newTask, setNewTask] = useState('');
-  const [newNote, setNewNote] = useState('');
-  const [selectedUser, setSelectedUser] = useState<string>('');
 
   useEffect(() => {
     const savedAuth = localStorage.getItem('taskflow_auth');
@@ -99,38 +124,46 @@ const Index = () => {
     setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
   };
 
+  const deleteTask = (id: number) => {
+    setTasks(tasks.filter(t => t.id !== id));
+  };
+
   const toggleNote = (id: number) => {
     setNotes(notes.map(n => n.id === id ? { ...n, completed: !n.completed } : n));
   };
 
-  const addTask = () => {
-    if (newTask.trim()) {
-      const task: Task = {
-        id: tasks.length + 1,
-        title: newTask,
-        completed: false,
-        assignedTo: selectedUser || currentUser?.name,
-        priority: 'medium'
-      };
-      setTasks([...tasks, task]);
-      
-      if (selectedUser && selectedUser !== currentUser?.name) {
-        sendNotification(
-          '🎯 Новая задача назначена!',
-          `Задача "${newTask}" назначена сотруднику ${selectedUser}`
-        );
-      }
-      
-      setNewTask('');
-      setSelectedUser('');
+  const deleteNote = (id: number) => {
+    setNotes(notes.filter(n => n.id !== id));
+  };
+
+  const addTask = (task: Omit<Task, 'id'>) => {
+    const newTask: Task = {
+      id: tasks.length + 1,
+      ...task,
+      createdBy: currentUser?.name
+    };
+    setTasks([...tasks, newTask]);
+    
+    if (task.assignedTo.length > 0) {
+      task.assignedTo.forEach(assignee => {
+        if (assignee !== currentUser?.name) {
+          sendNotification(
+            '🎯 Новая задача назначена!',
+            `Задача "${task.title}" назначена ${task.urgent ? '(СРОЧНО!)' : ''}`
+          );
+        }
+      });
     }
   };
 
-  const addNote = () => {
-    if (newNote.trim()) {
-      setNotes([...notes, { id: notes.length + 1, text: newNote, completed: false }]);
-      setNewNote('');
+  const addNote = (text: string) => {
+    if (text.trim()) {
+      setNotes([...notes, { id: notes.length + 1, text, completed: false }]);
     }
+  };
+
+  const dismissNotification = (taskId: number) => {
+    setDismissedNotifications([...dismissedNotifications, taskId]);
   };
 
   if (!isAuthenticated || !currentUser) {
@@ -155,16 +188,17 @@ const Index = () => {
               tasks={tasks}
               notes={notes}
               toggleTask={toggleTask}
+              dismissedNotifications={dismissedNotifications}
+              dismissNotification={dismissNotification}
             />
           )}
 
           {activeTab === 'tasks' && (
             <TasksTab
+              currentUser={currentUser}
               tasks={tasks}
-              newTask={newTask}
-              setNewTask={setNewTask}
-              addTask={addTask}
               toggleTask={toggleTask}
+              deleteTask={deleteTask}
             />
           )}
 
@@ -174,15 +208,11 @@ const Index = () => {
             users={registeredUsers}
             tasks={tasks}
             notes={notes}
-            newNote={newNote}
-            setNewNote={setNewNote}
             addNote={addNote}
             toggleNote={toggleNote}
-            newTask={newTask}
-            setNewTask={setNewTask}
-            selectedUser={selectedUser}
-            setSelectedUser={setSelectedUser}
+            deleteNote={deleteNote}
             addTask={addTask}
+            deleteTask={deleteTask}
             onLogout={handleLogout}
           />
         </main>

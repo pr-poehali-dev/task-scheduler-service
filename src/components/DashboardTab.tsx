@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -9,8 +10,11 @@ interface Task {
   id: number;
   title: string;
   completed: boolean;
-  assignedTo?: string;
+  assignedTo: string[];
   priority: 'low' | 'medium' | 'high';
+  urgent?: boolean;
+  deadline?: string;
+  createdBy?: string;
 }
 
 interface User {
@@ -26,9 +30,18 @@ interface DashboardTabProps {
   tasks: Task[];
   notes: Array<{ id: number; text: string; completed: boolean }>;
   toggleTask: (id: number) => void;
+  dismissedNotifications: number[];
+  dismissNotification: (taskId: number) => void;
 }
 
-const DashboardTab = ({ currentUser, tasks, notes, toggleTask }: DashboardTabProps) => {
+const DashboardTab = ({ 
+  currentUser, 
+  tasks, 
+  notes, 
+  toggleTask,
+  dismissedNotifications,
+  dismissNotification
+}: DashboardTabProps) => {
   const weeklyData = [
     { day: 'Пн', completed: 4, created: 6 },
     { day: 'Вт', completed: 7, created: 5 },
@@ -40,32 +53,102 @@ const DashboardTab = ({ currentUser, tasks, notes, toggleTask }: DashboardTabPro
   ];
 
   const priorityData = [
-    { name: 'Высокий', value: 8, color: '#ef4444' },
-    { name: 'Средний', value: 15, color: '#f59e0b' },
-    { name: 'Низкий', value: 12, color: '#10b981' },
+    { name: 'Высокий', value: tasks.filter(t => t.priority === 'high').length, color: '#ef4444' },
+    { name: 'Средний', value: tasks.filter(t => t.priority === 'medium').length, color: '#f59e0b' },
+    { name: 'Низкий', value: tasks.filter(t => t.priority === 'low').length, color: '#10b981' },
   ];
 
-  const completedTasks = tasks.filter(t => t.completed).length;
-  const totalTasks = tasks.length;
-  const completionRate = Math.round((completedTasks / totalTasks) * 100);
-  
-  const myTasks = tasks.filter(t => t.assignedTo === currentUser.name);
-  const newAssignedTasks = myTasks.filter(t => !t.completed);
+  const myTasks = tasks.filter(t => t.assignedTo.includes(currentUser.name));
+  const completedTasks = myTasks.filter(t => t.completed).length;
+  const totalTasks = myTasks.length;
+  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  const newAssignedTasks = myTasks.filter(t => 
+    !t.completed && 
+    t.createdBy !== currentUser.name && 
+    !dismissedNotifications.includes(t.id)
+  );
+
+  const isOverdue = (deadline?: string) => {
+    if (!deadline) return false;
+    return new Date(deadline) < new Date();
+  };
+
+  const isDueSoon = (deadline?: string) => {
+    if (!deadline) return false;
+    const daysUntil = Math.ceil((new Date(deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+    return daysUntil <= 3 && daysUntil >= 0;
+  };
+
+  const overdueTasks = myTasks.filter(t => !t.completed && isOverdue(t.deadline));
+  const dueSoonTasks = myTasks.filter(t => !t.completed && isDueSoon(t.deadline));
 
   return (
     <div className="space-y-6 animate-fade-in">
       {newAssignedTasks.length > 0 && (
         <Card className="border-l-4 border-l-orange-500 bg-orange-50 dark:bg-orange-950/20">
           <CardContent className="pt-6">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3 flex-1">
+                <Icon name="Bell" size={24} className="text-orange-600 mt-1" />
+                <div className="flex-1">
+                  <h3 className="font-bold text-lg mb-1">У вас {newAssignedTasks.length} {newAssignedTasks.length === 1 ? 'новая задача' : 'новых задачи'}</h3>
+                  <p className="text-sm text-muted-foreground mb-3">Вам назначены новые задачи для выполнения</p>
+                  <div className="space-y-2">
+                    {newAssignedTasks.slice(0, 3).map(task => (
+                      <div key={task.id} className="text-sm bg-background/50 p-2 rounded flex items-center justify-between">
+                        <span>• {task.title}</span>
+                        {task.urgent && <Badge variant="destructive" className="ml-2">СРОЧНО</Badge>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => newAssignedTasks.forEach(t => dismissNotification(t.id))}
+              >
+                <Icon name="X" size={18} />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {overdueTasks.length > 0 && (
+        <Card className="border-l-4 border-l-red-500 bg-red-50 dark:bg-red-950/20">
+          <CardContent className="pt-6">
             <div className="flex items-start gap-3">
-              <Icon name="Bell" size={24} className="text-orange-600 mt-1" />
+              <Icon name="AlertCircle" size={24} className="text-red-600 mt-1" />
               <div>
-                <h3 className="font-bold text-lg mb-1">У вас {newAssignedTasks.length} {newAssignedTasks.length === 1 ? 'новая задача' : 'новых задачи'}</h3>
-                <p className="text-sm text-muted-foreground mb-3">Вам назначены новые задачи для выполнения</p>
+                <h3 className="font-bold text-lg mb-1 text-red-700">Просроченные задачи ({overdueTasks.length})</h3>
+                <p className="text-sm text-muted-foreground mb-3">Эти задачи требуют срочного внимания</p>
                 <div className="space-y-2">
-                  {newAssignedTasks.slice(0, 3).map(task => (
+                  {overdueTasks.map(task => (
                     <div key={task.id} className="text-sm bg-background/50 p-2 rounded">
-                      • {task.title}
+                      • {task.title} - срок: {task.deadline}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {dueSoonTasks.length > 0 && !overdueTasks.length && (
+        <Card className="border-l-4 border-l-yellow-500 bg-yellow-50 dark:bg-yellow-950/20">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <Icon name="Clock" size={24} className="text-yellow-600 mt-1" />
+              <div>
+                <h3 className="font-bold text-lg mb-1 text-yellow-700">Срок истекает ({dueSoonTasks.length})</h3>
+                <p className="text-sm text-muted-foreground mb-3">Эти задачи нужно выполнить в ближайшие 3 дня</p>
+                <div className="space-y-2">
+                  {dueSoonTasks.map(task => (
+                    <div key={task.id} className="text-sm bg-background/50 p-2 rounded">
+                      • {task.title} - срок: {task.deadline}
                     </div>
                   ))}
                 </div>
@@ -87,7 +170,7 @@ const DashboardTab = ({ currentUser, tasks, notes, toggleTask }: DashboardTabPro
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{totalTasks}</div>
-            <p className="text-xs text-muted-foreground mt-1">+3 за эту неделю</p>
+            <p className="text-xs text-muted-foreground mt-1">Назначено вам</p>
           </CardContent>
         </Card>
 
@@ -197,25 +280,45 @@ const DashboardTab = ({ currentUser, tasks, notes, toggleTask }: DashboardTabPro
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Icon name="ListTodo" size={20} />
-            Последние задачи
+            Мои задачи
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {tasks.slice(0, 4).map(task => (
-              <div key={task.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
-                <Checkbox checked={task.completed} onCheckedChange={() => toggleTask(task.id)} />
-                <div className="flex-1">
-                  <p className={`font-medium ${task.completed ? 'line-through text-muted-foreground' : ''}`}>
-                    {task.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{task.assignedTo}</p>
+            {myTasks.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">Пока нет назначенных задач</p>
+            ) : (
+              myTasks.slice(0, 6).map(task => (
+                <div key={task.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
+                  <Checkbox checked={task.completed} onCheckedChange={() => toggleTask(task.id)} />
+                  <div className="flex-1">
+                    <span className={task.completed ? 'line-through text-muted-foreground' : ''}>
+                      {task.title}
+                    </span>
+                    <div className="flex items-center gap-2 mt-1">
+                      {task.urgent && <Badge variant="destructive" className="text-xs">СРОЧНО</Badge>}
+                      {task.completed && <Badge variant="outline" className="text-xs text-green-600 border-green-600">✓ Выполнено</Badge>}
+                      <Badge variant={
+                        task.priority === 'high' ? 'destructive' : 
+                        task.priority === 'medium' ? 'default' : 
+                        'secondary'
+                      } className="text-xs">
+                        {task.priority === 'high' ? 'Высокий' : task.priority === 'medium' ? 'Средний' : 'Низкий'}
+                      </Badge>
+                      {task.deadline && (
+                        <span className={`text-xs ${
+                          isOverdue(task.deadline) ? 'text-red-600' : 
+                          isDueSoon(task.deadline) ? 'text-orange-600' : 
+                          'text-muted-foreground'
+                        }`}>
+                          {task.deadline}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <Badge variant={task.priority === 'high' ? 'destructive' : task.priority === 'medium' ? 'default' : 'secondary'}>
-                  {task.priority === 'high' ? 'Высокий' : task.priority === 'medium' ? 'Средний' : 'Низкий'}
-                </Badge>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
