@@ -2,6 +2,7 @@ import NotesTab from './tabs/NotesTab';
 import TeamManagementTab from './tabs/TeamManagementTab';
 import AnalyticsTab from './tabs/AnalyticsTab';
 import ProfileTab from './tabs/ProfileTab';
+import SettingsTab from './tabs/SettingsTab';
 
 interface Task {
   id: number;
@@ -92,6 +93,10 @@ const TabsContent = ({
         onUpdateUser={onUpdateUser}
       />
     );
+  }
+
+  if (activeTab === 'settings' && currentUser.role === 'admin') {
+    return <SettingsTab />;
   }
 
   return null;

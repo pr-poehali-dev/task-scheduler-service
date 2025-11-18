@@ -68,6 +68,17 @@ const Sidebar = ({ currentUser, activeTab, setActiveTab }: SidebarProps) => {
                 <Icon name="BarChart3" size={20} />
                 <span className="font-medium text-[#ffffff]">Аналитика</span>
               </button>
+              <button
+                onClick={() => setActiveTab('settings')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                  activeTab === 'settings'
+                    ? 'bg-sidebar-accent text-primary'
+                    : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
+                }`}
+              >
+                <Icon name="Settings" size={20} />
+                <span className="font-medium text-[#ffffff]">Настройки</span>
+              </button>
             </div>
           </div>
         )}
