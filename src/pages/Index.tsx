@@ -62,6 +62,22 @@ const Index = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  const sendNotification = (title: string, body: string) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, {
+        body,
+        icon: '/favicon.ico',
+        badge: '/favicon.ico'
+      });
+    }
+  };
+
   const handleLogin = (user: User) => {
     setCurrentUser(user);
     setIsAuthenticated(true);
@@ -97,6 +113,14 @@ const Index = () => {
         priority: 'medium'
       };
       setTasks([...tasks, task]);
+      
+      if (selectedUser && selectedUser !== currentUser?.name) {
+        sendNotification(
+          '🎯 Новая задача назначена!',
+          `Задача "${newTask}" назначена сотруднику ${selectedUser}`
+        );
+      }
+      
       setNewTask('');
       setSelectedUser('');
     }
