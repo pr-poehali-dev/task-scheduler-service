@@ -4,6 +4,7 @@ import DashboardTab from '@/components/DashboardTab';
 import TasksTab from '@/components/TasksTab';
 import TabsContent from '@/components/TabsContent';
 import AuthScreen from '@/components/AuthScreen';
+import { BACKEND_URLS } from '@/config/backend';
 
 interface Task {
   id: number;
@@ -25,6 +26,7 @@ interface User {
   tasksCompleted: number;
   password: string;
   avatar?: string;
+  telegramChatId?: number;
 }
 
 const Index = () => {
@@ -122,8 +124,27 @@ const Index = () => {
     setRegisteredUsers([...registeredUsers, user]);
   };
 
-  const toggleTask = (id: number) => {
-    setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+  const toggleTask = async (id: number) => {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+
+    const newCompletedStatus = !task.completed;
+    setTasks(tasks.map(t => t.id === id ? { ...t, completed: newCompletedStatus } : t));
+
+    try {
+      await fetch(BACKEND_URLS.SYNC_TASK, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          taskId: id,
+          completed: newCompletedStatus
+        })
+      });
+    } catch (error) {
+      console.error('Error syncing task status:', error);
+    }
   };
 
   const deleteTask = (id: number) => {
@@ -138,7 +159,7 @@ const Index = () => {
     setNotes(notes.filter(n => n.id !== id));
   };
 
-  const addTask = (task: Omit<Task, 'id'>) => {
+  const addTask = async (task: Omit<Task, 'id'>) => {
     const newTask: Task = {
       id: tasks.length + 1,
       ...task,
@@ -156,6 +177,29 @@ const Index = () => {
           );
         }
       });
+
+      try {
+        const response = await fetch(BACKEND_URLS.NOTIFY_TASK, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            taskId: newTask.id,
+            title: task.title,
+            deadline: task.deadline || 'Не указан',
+            urgent: task.urgent || false,
+            createdBy: currentUser?.name || 'Администратор',
+            assignedTo: task.assignedTo
+          })
+        });
+
+        if (!response.ok) {
+          console.error('Failed to send Telegram notification');
+        }
+      } catch (error) {
+        console.error('Error sending Telegram notification:', error);
+      }
     }
   };
 

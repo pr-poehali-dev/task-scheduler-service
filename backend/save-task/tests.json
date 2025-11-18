@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "Save task OPTIONS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Create new task",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "title": "Test task",
+        "priority": "high",
+        "urgent": true,
+        "deadline": "2025-01-25",
+        "createdBy": "Admin",
+        "assignedTo": ["User1", "User2"]
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

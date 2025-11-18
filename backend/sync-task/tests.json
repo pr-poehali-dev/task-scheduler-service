@@ -1,0 +1,30 @@
+{
+  "tests": [
+    {
+      "name": "Sync OPTIONS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Get all tasks status",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Update task completion",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "taskId": 1,
+        "completed": true
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

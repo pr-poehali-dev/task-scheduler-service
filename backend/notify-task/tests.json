@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "Send notification OPTIONS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Send task notification",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "taskId": 1,
+        "title": "Test task",
+        "deadline": "2025-01-20",
+        "urgent": false,
+        "createdBy": "Admin",
+        "assignedTo": ["User1"]
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

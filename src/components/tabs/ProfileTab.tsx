@@ -5,6 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import EditProfileModal from '../EditProfileModal';
+import TelegramConnect from '../TelegramConnect';
+import TelegramSetupGuide from '../TelegramSetupGuide';
 
 interface Task {
   id: number;
@@ -24,6 +26,7 @@ interface User {
   role: 'user' | 'admin';
   tasksCompleted: number;
   avatar?: string;
+  telegramChatId?: number;
 }
 
 interface ProfileTabProps {
@@ -95,6 +98,10 @@ const ProfileTab = ({ currentUser, tasks, onLogout, onUpdateUser }: ProfileTabPr
           </Button>
         </CardContent>
       </Card>
+
+      <TelegramConnect currentUser={currentUser} />
+      
+      <TelegramSetupGuide />
       </div>
     </>
   );
