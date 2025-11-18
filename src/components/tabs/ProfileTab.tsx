@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
+import EditProfileModal from '../EditProfileModal';
 
 interface Task {
   id: number;
@@ -21,16 +23,27 @@ interface User {
   email: string;
   role: 'user' | 'admin';
   tasksCompleted: number;
+  avatar?: string;
 }
 
 interface ProfileTabProps {
   currentUser: User;
   tasks: Task[];
   onLogout: () => void;
+  onUpdateUser: (user: User) => void;
 }
 
-const ProfileTab = ({ currentUser, tasks, onLogout }: ProfileTabProps) => {
+const ProfileTab = ({ currentUser, tasks, onLogout, onUpdateUser }: ProfileTabProps) => {
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
   return (
+    <>
+      <EditProfileModal
+        user={currentUser}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={onUpdateUser}
+      />
     <div className="space-y-6 animate-fade-in">
       <div>
         <h2 className="text-3xl font-bold mb-2">Профиль</h2>
@@ -41,6 +54,9 @@ const ProfileTab = ({ currentUser, tasks, onLogout }: ProfileTabProps) => {
         <CardHeader>
           <div className="flex items-center gap-4">
             <Avatar className="h-20 w-20">
+              {currentUser.avatar ? (
+                <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
+              ) : null}
               <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
                 {currentUser.name.split(' ').map(n => n[0]).join('')}
               </AvatarFallback>
@@ -67,6 +83,11 @@ const ProfileTab = ({ currentUser, tasks, onLogout }: ProfileTabProps) => {
               </p>
             </div>
           </div>
+
+          <Button onClick={() => setIsEditModalOpen(true)} variant="outline" className="w-full">
+            <Icon name="Edit" size={18} />
+            Редактировать профиль
+          </Button>
           
           <Button onClick={onLogout} variant="destructive" className="w-full">
             <Icon name="LogOut" size={18} />
@@ -74,7 +95,8 @@ const ProfileTab = ({ currentUser, tasks, onLogout }: ProfileTabProps) => {
           </Button>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </>
   );
 };
 

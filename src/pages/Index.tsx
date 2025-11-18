@@ -14,6 +14,7 @@ interface Task {
   urgent?: boolean;
   deadline?: string;
   createdBy?: string;
+  createdAt?: string;
 }
 
 interface User {
@@ -23,6 +24,7 @@ interface User {
   role: 'user' | 'admin';
   tasksCompleted: number;
   password: string;
+  avatar?: string;
 }
 
 const Index = () => {
@@ -140,9 +142,10 @@ const Index = () => {
     const newTask: Task = {
       id: tasks.length + 1,
       ...task,
-      createdBy: currentUser?.name
+      createdBy: currentUser?.name,
+      createdAt: new Date().toISOString()
     };
-    setTasks([...tasks, newTask]);
+    setTasks([newTask, ...tasks]);
     
     if (task.assignedTo.length > 0) {
       task.assignedTo.forEach(assignee => {
@@ -164,6 +167,12 @@ const Index = () => {
 
   const dismissNotification = (taskId: number) => {
     setDismissedNotifications([...dismissedNotifications, taskId]);
+  };
+
+  const updateUser = (updatedUser: User) => {
+    setCurrentUser(updatedUser);
+    localStorage.setItem('taskflow_auth', JSON.stringify(updatedUser));
+    setRegisteredUsers(registeredUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
   };
 
   if (!isAuthenticated || !currentUser) {
@@ -197,6 +206,7 @@ const Index = () => {
             <TasksTab
               currentUser={currentUser}
               tasks={tasks}
+              users={registeredUsers}
               toggleTask={toggleTask}
               deleteTask={deleteTask}
             />
@@ -214,6 +224,7 @@ const Index = () => {
             addTask={addTask}
             deleteTask={deleteTask}
             onLogout={handleLogout}
+            onUpdateUser={updateUser}
           />
         </main>
       </div>

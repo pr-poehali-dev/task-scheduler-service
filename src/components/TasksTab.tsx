@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
+import TaskDetailModal from './TaskDetailModal';
 
 interface Task {
   id: number;
@@ -13,6 +15,7 @@ interface Task {
   urgent?: boolean;
   deadline?: string;
   createdBy?: string;
+  createdAt?: string;
 }
 
 interface User {
@@ -21,17 +24,27 @@ interface User {
   email: string;
   role: 'user' | 'admin';
   tasksCompleted: number;
+  avatar?: string;
 }
 
 interface TasksTabProps {
   currentUser: User;
   tasks: Task[];
+  users: User[];
   toggleTask: (id: number) => void;
   deleteTask: (id: number) => void;
 }
 
-const TasksTab = ({ currentUser, tasks, toggleTask, deleteTask }: TasksTabProps) => {
+const TasksTab = ({ currentUser, tasks, users, toggleTask, deleteTask }: TasksTabProps) => {
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const myTasks = tasks.filter(t => t.assignedTo.includes(currentUser.name));
+
+  const handleTaskClick = (task: Task) => {
+    setSelectedTask(task);
+    setIsModalOpen(true);
+  };
 
   const isOverdue = (deadline?: string) => {
     if (!deadline) return false;
@@ -48,7 +61,15 @@ const TasksTab = ({ currentUser, tasks, toggleTask, deleteTask }: TasksTabProps)
   const completedTasks = myTasks.filter(t => t.completed);
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <>
+      <TaskDetailModal
+        task={selectedTask}
+        users={users}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
+
+      <div className="space-y-6 animate-fade-in">
       <div>
         <h2 className="text-3xl font-bold mb-2">Мои задачи</h2>
         <p className="text-muted-foreground">Только задачи, назначенные вам администратором</p>
@@ -64,10 +85,18 @@ const TasksTab = ({ currentUser, tasks, toggleTask, deleteTask }: TasksTabProps)
               <p className="text-center text-muted-foreground py-8">Все задачи выполнены! 🎉</p>
             ) : (
               activeTasks.map(task => (
-                <div key={task.id} className="flex items-start gap-3 p-4 bg-card border rounded-lg hover:shadow-md transition-all">
+                <div 
+                  key={task.id} 
+                  className="flex items-start gap-3 p-4 bg-card border rounded-lg hover:shadow-md transition-all cursor-pointer"
+                  onClick={() => handleTaskClick(task)}
+                >
                   <Checkbox 
                     checked={task.completed} 
-                    onCheckedChange={() => toggleTask(task.id)}
+                    onCheckedChange={(e) => {
+                      e.stopPropagation?.();
+                      toggleTask(task.id);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
                     className="mt-1"
                   />
                   <div className="flex-1">
@@ -145,7 +174,8 @@ const TasksTab = ({ currentUser, tasks, toggleTask, deleteTask }: TasksTabProps)
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </>
   );
 };
 

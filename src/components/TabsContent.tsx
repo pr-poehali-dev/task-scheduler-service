@@ -20,6 +20,7 @@ interface User {
   email: string;
   role: 'user' | 'admin';
   tasksCompleted: number;
+  avatar?: string;
 }
 
 interface TabsContentProps {
@@ -34,6 +35,7 @@ interface TabsContentProps {
   addTask: (task: Omit<Task, 'id'>) => void;
   deleteTask: (id: number) => void;
   onLogout: () => void;
+  onUpdateUser: (user: User) => void;
 }
 
 const TabsContent = ({
@@ -47,7 +49,8 @@ const TabsContent = ({
   deleteNote,
   addTask,
   deleteTask,
-  onLogout
+  onLogout,
+  onUpdateUser
 }: TabsContentProps) => {
   if (activeTab === 'notes') {
     return (
@@ -86,6 +89,7 @@ const TabsContent = ({
         currentUser={currentUser}
         tasks={tasks}
         onLogout={onLogout}
+        onUpdateUser={onUpdateUser}
       />
     );
   }

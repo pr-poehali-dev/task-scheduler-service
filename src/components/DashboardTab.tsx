@@ -15,6 +15,7 @@ interface Task {
   urgent?: boolean;
   deadline?: string;
   createdBy?: string;
+  createdAt?: string;
 }
 
 interface User {

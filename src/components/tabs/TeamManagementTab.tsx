@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -18,6 +18,7 @@ interface Task {
   urgent?: boolean;
   deadline?: string;
   createdBy?: string;
+  createdAt?: string;
 }
 
 interface User {
@@ -26,6 +27,7 @@ interface User {
   email: string;
   role: 'user' | 'admin';
   tasksCompleted: number;
+  avatar?: string;
 }
 
 interface TeamManagementTabProps {
@@ -146,6 +148,9 @@ const TeamManagementTab = ({ users, tasks, addTask, deleteTask }: TeamManagement
                     onCheckedChange={() => toggleUserSelection(user.name)}
                   />
                   <Avatar className="h-8 w-8">
+                    {user.avatar ? (
+                      <AvatarImage src={user.avatar} alt={user.name} />
+                    ) : null}
                     <AvatarFallback className="text-xs">
                       {user.name.split(' ').map(n => n[0]).join('')}
                     </AvatarFallback>
@@ -310,6 +315,9 @@ const TeamManagementTab = ({ users, tasks, addTask, deleteTask }: TeamManagement
                 <div key={user.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                   <div className="flex items-center gap-3">
                     <Avatar>
+                      {user.avatar ? (
+                        <AvatarImage src={user.avatar} alt={user.name} />
+                      ) : null}
                       <AvatarFallback className="bg-primary text-primary-foreground">
                         {user.name.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
