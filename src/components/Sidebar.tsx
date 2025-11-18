@@ -26,8 +26,6 @@ const Sidebar = ({ currentUser, activeTab, setActiveTab }: SidebarProps) => {
             { id: 'dashboard', icon: 'LayoutDashboard', label: 'Дашборд' },
             { id: 'tasks', icon: 'CheckSquare', label: 'Задачи' },
             { id: 'notes', icon: 'StickyNote', label: 'Заметки' },
-            { id: 'analytics', icon: 'BarChart3', label: 'Аналитика' },
-            { id: 'team', icon: 'Users', label: 'Команда' },
             { id: 'profile', icon: 'User', label: 'Профиль' },
           ].map(item => (
             <button
@@ -47,17 +45,30 @@ const Sidebar = ({ currentUser, activeTab, setActiveTab }: SidebarProps) => {
 
         {currentUser.role === 'admin' && (
           <div className="mt-8 pt-8 border-t border-sidebar-border">
-            <button
-              onClick={() => setActiveTab('admin')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                activeTab === 'admin'
-                  ? 'bg-sidebar-accent text-primary'
-                  : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
-              }`}
-            >
-              <Icon name="Shield" size={20} />
-              <span className="font-medium">Админка</span>
-            </button>
+            <div className="space-y-2">
+              <button
+                onClick={() => setActiveTab('team')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                  activeTab === 'team'
+                    ? 'bg-sidebar-accent text-primary'
+                    : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
+                }`}
+              >
+                <Icon name="Users" size={20} />
+                <span className="font-medium text-[#ffffff]">Команда</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('analytics')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                  activeTab === 'analytics'
+                    ? 'bg-sidebar-accent text-primary'
+                    : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
+                }`}
+              >
+                <Icon name="BarChart3" size={20} />
+                <span className="font-medium text-[#ffffff]">Аналитика</span>
+              </button>
+            </div>
           </div>
         )}
       </div>
