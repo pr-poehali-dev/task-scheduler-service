@@ -40,7 +40,7 @@ const Sidebar = ({ currentUser, activeTab, setActiveTab }: SidebarProps) => {
               }`}
             >
               <Icon name={item.icon} size={20} />
-              <span className="font-medium">{item.label}</span>
+              <span className="font-medium text-[#f0ba2f]">{item.label}</span>
             </button>
           ))}
         </nav>
