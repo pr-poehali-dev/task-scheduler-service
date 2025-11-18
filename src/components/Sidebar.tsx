@@ -63,7 +63,7 @@ const Sidebar = ({ currentUser, activeTab, setActiveTab }: SidebarProps) => {
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-sidebar-border">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mb-3">
           <Avatar>
             <AvatarFallback className="bg-primary text-primary-foreground">
               {currentUser.name.split(' ').map(n => n[0]).join('')}
@@ -74,6 +74,13 @@ const Sidebar = ({ currentUser, activeTab, setActiveTab }: SidebarProps) => {
             <p className="text-xs text-muted-foreground truncate">{currentUser.email}</p>
           </div>
         </div>
+        <button
+          onClick={() => window.location.reload()}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all"
+        >
+          <Icon name="LogOut" size={16} />
+          <span className="text-sm font-medium">Выйти</span>
+        </button>
       </div>
     </aside>
   );
