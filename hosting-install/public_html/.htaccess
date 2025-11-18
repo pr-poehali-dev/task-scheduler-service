@@ -1,0 +1,174 @@
+# TaskFlow - Apache configuration для shared hosting
+
+# Включаем mod_rewrite
+RewriteEngine On
+
+# ========================================
+# CORS заголовки для API запросов
+# ========================================
+<IfModule mod_headers.c>
+    # Для всех ответов добавляем CORS
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, X-User-Id, X-Auth-Token, X-Session-Id, X-Api-Key"
+    Header set Access-Control-Max-Age "3600"
+    
+    # Для Python CGI скриптов
+    <FilesMatch "\.py$">
+        Header set Access-Control-Allow-Origin "*"
+        Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Header set Access-Control-Allow-Headers "Content-Type, X-User-Id, X-Auth-Token"
+    </FilesMatch>
+</IfModule>
+
+# ========================================
+# Обработка OPTIONS (preflight) запросов
+# ========================================
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
+# ========================================
+# Frontend SPA маршрутизация
+# ========================================
+# Если файл или директория не существует, отдаем index.html
+# Но НЕ для cgi-bin запросов
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/cgi-bin/
+RewriteRule ^ /index.html [L]
+
+# ========================================
+# Безопасность
+# ========================================
+
+# Отключаем листинг директорий
+Options -Indexes
+
+# Защита конфигурационных файлов
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Защита .env файлов
+<FilesMatch "\.env">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Защита JSON конфигов
+<FilesMatch "(package|composer|tsconfig)\.json$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Защита SQL миграций (если они в public_html)
+<FilesMatch "\.sql$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# ========================================
+# Кэширование статических файлов
+# ========================================
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    # Изображения
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+    
+    # CSS и JavaScript
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType text/javascript "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    
+    # Шрифты
+    ExpiresByType font/ttf "access plus 1 year"
+    ExpiresByType font/otf "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType application/font-woff "access plus 1 year"
+    
+    # HTML не кэшируем
+    ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+# Cache-Control заголовки
+<IfModule mod_headers.c>
+    # Статические файлы - можно кэшировать
+    <FilesMatch "\.(ico|pdf|flv|jpg|jpeg|png|gif|js|css|swf|woff|woff2|ttf|svg)$">
+        Header set Cache-Control "max-age=31536000, public"
+    </FilesMatch>
+    
+    # HTML - не кэшируем
+    <FilesMatch "\.(html|htm)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
+</IfModule>
+
+# ========================================
+# Сжатие (Gzip)
+# ========================================
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE image/svg+xml
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+</IfModule>
+
+# ========================================
+# MIME типы (если отсутствуют)
+# ========================================
+<IfModule mod_mime.c>
+    AddType application/javascript .js
+    AddType text/css .css
+    AddType image/svg+xml .svg
+    AddType font/woff .woff
+    AddType font/woff2 .woff2
+    AddType application/json .json
+</IfModule>
+
+# ========================================
+# Дополнительная безопасность
+# ========================================
+<IfModule mod_headers.c>
+    # XSS Protection
+    Header set X-XSS-Protection "1; mode=block"
+    
+    # Prevent clickjacking
+    Header set X-Frame-Options "SAMEORIGIN"
+    
+    # MIME type sniffing prevention
+    Header set X-Content-Type-Options "nosniff"
+    
+    # Referrer Policy
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# ========================================
+# Перенаправление на HTTPS (опционально)
+# ========================================
+# Раскомментируйте, если хотите принудительно использовать HTTPS
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# ========================================
+# Custom Error Pages (опционально)
+# ========================================
+# ErrorDocument 404 /index.html
+# ErrorDocument 500 /500.html
