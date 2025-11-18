@@ -38,6 +38,7 @@ interface TabsContentProps {
   selectedUser: string;
   setSelectedUser: (value: string) => void;
   addTask: () => void;
+  onLogout: () => void;
 }
 
 const TabsContent = ({
@@ -54,7 +55,8 @@ const TabsContent = ({
   setNewTask,
   selectedUser,
   setSelectedUser,
-  addTask
+  addTask,
+  onLogout
 }: TabsContentProps) => {
   const priorityData = [
     { name: 'Высокий', value: 8, color: '#ef4444' },
@@ -246,6 +248,15 @@ const TabsContent = ({
                     <div className="text-sm text-muted-foreground">Заметок</div>
                   </div>
                 </div>
+
+                <Button
+                  onClick={onLogout}
+                  variant="destructive"
+                  className="mt-6 w-full"
+                >
+                  <Icon name="LogOut" size={18} />
+                  Выйти из системы
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -294,6 +305,72 @@ const TabsContent = ({
           </CardContent>
         </Card>
 
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Icon name="Clock" size={20} />
+                Задачи в работе
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {tasks.filter(t => !t.completed).length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">Все задачи выполнены! 🎉</p>
+                ) : (
+                  tasks.filter(t => !t.completed).map(task => (
+                    <div key={task.id} className="p-3 bg-muted/50 rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="font-medium">{task.title}</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            <Icon name="User" size={12} className="inline mr-1" />
+                            {task.assignedTo}
+                          </p>
+                        </div>
+                        <Badge variant={task.priority === 'high' ? 'destructive' : task.priority === 'medium' ? 'default' : 'secondary'}>
+                          {task.priority === 'high' ? 'Высокий' : task.priority === 'medium' ? 'Средний' : 'Низкий'}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Icon name="CheckCircle2" size={20} />
+                Выполненные задачи
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {tasks.filter(t => t.completed).length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">Пока нет выполненных задач</p>
+                ) : (
+                  tasks.filter(t => t.completed).map(task => (
+                    <div key={task.id} className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="font-medium line-through text-muted-foreground">{task.title}</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            <Icon name="User" size={12} className="inline mr-1" />
+                            {task.assignedTo}
+                          </p>
+                        </div>
+                        <Icon name="CheckCircle2" size={20} className="text-green-600" />
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         <Card>
           <CardHeader>
             <CardTitle>Статистика команды</CardTitle>
@@ -316,7 +393,7 @@ const TabsContent = ({
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-primary">{user.tasksCompleted}</p>
+                    <p className="text-2xl font-bold text-primary">{tasks.filter(t => t.assignedTo === user.name && t.completed).length}</p>
                     <p className="text-xs text-muted-foreground">выполнено</p>
                   </div>
                 </div>

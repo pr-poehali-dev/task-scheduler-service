@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import DashboardTab from '@/components/DashboardTab';
 import TasksTab from '@/components/TasksTab';
 import TabsContent from '@/components/TabsContent';
+import AuthScreen from '@/components/AuthScreen';
 
 interface Task {
   id: number;
@@ -18,11 +19,22 @@ interface User {
   email: string;
   role: 'user' | 'admin';
   tasksCompleted: number;
+  password: string;
 }
 
 const Index = () => {
-  const [currentUser] = useState<User>({ id: 1, name: 'Алексей Иванов', email: 'alex@company.ru', role: 'admin', tasksCompleted: 24 });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
+  
+  const [registeredUsers, setRegisteredUsers] = useState<User[]>([
+    { id: 1, name: 'Алексей Иванов', email: 'alex@company.ru', role: 'admin', tasksCompleted: 24, password: 'admin123' },
+    { id: 2, name: 'Мария Петрова', email: 'maria@company.ru', role: 'user', tasksCompleted: 18, password: 'user123' },
+    { id: 3, name: 'Иван Сидоров', email: 'ivan@company.ru', role: 'user', tasksCompleted: 31, password: 'user123' },
+    { id: 4, name: 'Елена Смирнова', email: 'elena@company.ru', role: 'user', tasksCompleted: 15, password: 'user123' },
+    { id: 5, name: 'Дмитрий Козлов', email: 'dmitry@company.ru', role: 'user', tasksCompleted: 22, password: 'user123' },
+  ]);
+
   const [tasks, setTasks] = useState<Task[]>([
     { id: 1, title: 'Подготовить презентацию для клиента', completed: true, assignedTo: 'Алексей Иванов', priority: 'high' },
     { id: 2, title: 'Провести код-ревью PR #234', completed: false, assignedTo: 'Алексей Иванов', priority: 'medium' },
@@ -37,17 +49,35 @@ const Index = () => {
     { id: 3, text: 'Записаться к стоматологу', completed: false },
   ]);
 
-  const [users] = useState<User[]>([
-    { id: 1, name: 'Алексей Иванов', email: 'alex@company.ru', role: 'admin', tasksCompleted: 24 },
-    { id: 2, name: 'Мария Петрова', email: 'maria@company.ru', role: 'user', tasksCompleted: 18 },
-    { id: 3, name: 'Иван Сидоров', email: 'ivan@company.ru', role: 'user', tasksCompleted: 31 },
-    { id: 4, name: 'Елена Смирнова', email: 'elena@company.ru', role: 'user', tasksCompleted: 15 },
-    { id: 5, name: 'Дмитрий Козлов', email: 'dmitry@company.ru', role: 'user', tasksCompleted: 22 },
-  ]);
-
   const [newTask, setNewTask] = useState('');
   const [newNote, setNewNote] = useState('');
   const [selectedUser, setSelectedUser] = useState<string>('');
+
+  useEffect(() => {
+    const savedAuth = localStorage.getItem('taskflow_auth');
+    if (savedAuth) {
+      const user = JSON.parse(savedAuth);
+      setCurrentUser(user);
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const handleLogin = (user: User) => {
+    setCurrentUser(user);
+    setIsAuthenticated(true);
+    localStorage.setItem('taskflow_auth', JSON.stringify(user));
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem('taskflow_auth');
+    setActiveTab('dashboard');
+  };
+
+  const handleRegister = (user: User) => {
+    setRegisteredUsers([...registeredUsers, user]);
+  };
 
   const toggleTask = (id: number) => {
     setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
@@ -63,7 +93,7 @@ const Index = () => {
         id: tasks.length + 1,
         title: newTask,
         completed: false,
-        assignedTo: selectedUser || currentUser.name,
+        assignedTo: selectedUser || currentUser?.name,
         priority: 'medium'
       };
       setTasks([...tasks, task]);
@@ -78,6 +108,16 @@ const Index = () => {
       setNewNote('');
     }
   };
+
+  if (!isAuthenticated || !currentUser) {
+    return (
+      <AuthScreen
+        onLogin={handleLogin}
+        registeredUsers={registeredUsers}
+        onRegister={handleRegister}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -107,7 +147,7 @@ const Index = () => {
           <TabsContent
             activeTab={activeTab}
             currentUser={currentUser}
-            users={users}
+            users={registeredUsers}
             tasks={tasks}
             notes={notes}
             newNote={newNote}
@@ -119,6 +159,7 @@ const Index = () => {
             selectedUser={selectedUser}
             setSelectedUser={setSelectedUser}
             addTask={addTask}
+            onLogout={handleLogout}
           />
         </main>
       </div>

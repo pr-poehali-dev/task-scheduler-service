@@ -48,9 +48,33 @@ const DashboardTab = ({ currentUser, tasks, notes, toggleTask }: DashboardTabPro
   const completedTasks = tasks.filter(t => t.completed).length;
   const totalTasks = tasks.length;
   const completionRate = Math.round((completedTasks / totalTasks) * 100);
+  
+  const myTasks = tasks.filter(t => t.assignedTo === currentUser.name);
+  const newAssignedTasks = myTasks.filter(t => !t.completed);
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {newAssignedTasks.length > 0 && (
+        <Card className="border-l-4 border-l-orange-500 bg-orange-50 dark:bg-orange-950/20">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <Icon name="Bell" size={24} className="text-orange-600 mt-1" />
+              <div>
+                <h3 className="font-bold text-lg mb-1">У вас {newAssignedTasks.length} {newAssignedTasks.length === 1 ? 'новая задача' : 'новых задачи'}</h3>
+                <p className="text-sm text-muted-foreground mb-3">Вам назначены новые задачи для выполнения</p>
+                <div className="space-y-2">
+                  {newAssignedTasks.slice(0, 3).map(task => (
+                    <div key={task.id} className="text-sm bg-background/50 p-2 rounded">
+                      • {task.title}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div>
         <h2 className="text-3xl font-bold mb-2">Добро пожаловать, {currentUser.name.split(' ')[0]}! 👋</h2>
         <p className="text-muted-foreground">Вот что происходит с вашими задачами сегодня</p>
