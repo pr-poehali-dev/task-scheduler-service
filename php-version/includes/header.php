@@ -159,6 +159,11 @@
                 Администрирование
             </div>
             
+            <a href="/admin.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'admin.php' ? 'active' : ''; ?>">
+                <i class="fas fa-shield-alt"></i>
+                <span>Панель админа</span>
+            </a>
+            
             <a href="/users.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'users.php' ? 'active' : ''; ?>">
                 <i class="fas fa-users-cog"></i>
                 <span>Пользователи</span>

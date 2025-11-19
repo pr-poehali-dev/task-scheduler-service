@@ -168,7 +168,7 @@ $pageTitle = 'Регистрация - TaskFlow';
                     localStorage.setItem('user_name', data.user.full_name);
                     localStorage.setItem('user_role', data.user.role);
                     
-                    window.location.href = '/index.php';
+                    window.location.href = '/auth-handler.php';
                 } else {
                     throw new Error(data.error || 'Ошибка регистрации');
                 }
